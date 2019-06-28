@@ -1,0 +1,20 @@
+- name: "set path for dump"
+  set_fact: 
+    postgresql_dump_path: "/tmp/"
+- name: "Install bz2"
+  yum:
+    name: "bzip2" 
+- name: "unarchive dump file"
+  unarchive:
+    src: "{{ postgresql_backup_file }}"
+    dest: "/tmp/"
+
+- name: "import backup file"
+  shell: "psql boap < {{ postgresql_dump_path }}/dump.sql"
+  become_user: "postgres"
+  become: true
+
+- name: "Delete backup file"
+  file:
+    path: "{{ postgresql_dump_path }}/dump.sql"
+    state: absent
