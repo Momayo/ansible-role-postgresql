@@ -1,20 +1,38 @@
 - name: "set path for dump"
   set_fact: 
-    postgresql_dump_path: "/tmp/"
-- name: "Install bz2"
+    postgresql_dump_path: "/tmp/postgres"
+- name: "Install bz2"  
   yum:
     name: "bzip2" 
+
+- name: "Create temp directory for restore"
+  file:   
+    path: "{{ postgresql_dump_path }}"
+    state: "directory"
+
 - name: "unarchive dump file"
   unarchive:
     src: "{{ postgresql_backup_file }}"
-    dest: "/tmp/"
+    dest: "{{ postgresql_dump_path }}"
+
+- name: "stat {{ postgresql_dump_path }}"
+  find: 
+    paths: "{{ postgresql_dump_path }}"
+    recurse: yes
+  register: "postgresql_bz_result"  
+
+- name: "debug bz values"
+  debug:
+    msg: "{{ postgresql_bz_result }}"
 
 - name: "import backup file"
-  shell: "psql boap < {{ postgresql_dump_path }}/dump.sql"
+  shell: "psql -d {{ item.db }} < \"{{ postgresql_bz_result.files[0].path }}\""
   become_user: "postgres"
   become: true
+  with_items: "{{ postgresql_restore }}"
+  when: "item.restore | bool"
 
 - name: "Delete backup file"
   file:
-    path: "{{ postgresql_dump_path }}/dump.sql"
+    path: "{{ postgresql_dump_path }}dump.sql"
     state: absent
