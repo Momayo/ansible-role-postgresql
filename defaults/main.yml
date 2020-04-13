@@ -67,3 +67,6 @@ postgresql_restore: []
 # - file: #path on host
 #   db: #database name
 #   restore: #expects boolean 
+
+# Whether to output user data when managing users.
+postgres_users_no_log: true
